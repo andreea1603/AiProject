@@ -1,0 +1,2 @@
+﻿C:\Users\strat\Documents\GitHub\SentiTweet\DomainLayer\Models\Common\BaseEntity.cs
+C:\Users\strat\Documents\GitHub\SentiTweet\DomainLayer\Models\Post.cs

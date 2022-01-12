@@ -1,0 +1,12 @@
+j
+aC:\Users\strat\Documents\GitHub\SentiTweet\TestsSentiTweet\Controllers\Analysis\AnalysisResult.csutf-8x
+oC:\Users\strat\Documents\GitHub\SentiTweet\TestsSentiTweet\Controllers\Tweet\ClassificationOfTweetsByHashtag.csutf-8p
+gC:\Users\strat\Documents\GitHub\SentiTweet\TestsSentiTweet\Controllers\Tweet\NumberOfTweetsByHashtag.csutf-8r
+iC:\Users\strat\Documents\GitHub\SentiTweet\TestsSentiTweet\Services\Analysis\SentimentPredictionResult.csutf-8q
+hC:\Users\strat\Documents\GitHub\SentiTweet\TestsSentiTweet\Services\Analysis\SentimentPredictionScore.csutf-8e
+\C:\Users\strat\Documents\GitHub\SentiTweet\TestsSentiTweet\Services\Tweet\TweetsByHashtag.csutf-8e
+\C:\Users\strat\Documents\GitHub\SentiTweet\TestsSentiTweet\Services\Users\PasswordHashing.csutf-8a
+XC:\Users\strat\Documents\GitHub\SentiTweet\TestsSentiTweet\Services\Users\UserActions.csutf-8}
+rC:\Users\strat\.nuget\packages\microsoft.net.test.sdk\16.9.4\build\netcoreapp2.1\Microsoft.NET.Test.Sdk.Program.csutf-8…
+zC:\Users\strat\Documents\GitHub\SentiTweet\TestsSentiTweet\obj\Debug\net5.0\.NETCoreApp,Version=v5.0.AssemblyAttributes.csutf-8v
+kC:\Users\strat\Documents\GitHub\SentiTweet\TestsSentiTweet\obj\Debug\net5.0\TestsSentiTweet.AssemblyInfo.csutf-8

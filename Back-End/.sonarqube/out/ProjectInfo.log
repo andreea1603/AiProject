@@ -1,0 +1,28 @@
+Product projects
+---------------------------------------
+C:\Users\strat\Documents\GitHub\SentiTweet\WebAPI\WebAPI.csproj
+C:\Users\strat\Documents\GitHub\SentiTweet\DomainLayer\DomainLayer.csproj
+C:\Users\strat\Documents\GitHub\SentiTweet\Tests\Tests.csproj
+C:\Users\strat\Documents\GitHub\SentiTweet\RepositoryLayer\RepositoryLayer.csproj
+
+
+Test projects
+---------------------------------------
+C:\Users\strat\Documents\GitHub\SentiTweet\TestsSentiTweet\TestsSentiTweet.csproj
+
+
+Invalid projects
+---------------------------------------
+{none}
+
+
+Skipped projects
+---------------------------------------
+C:\Users\strat\Documents\GitHub\SentiTweet\ServicesLayer\ServicesLayer.csproj
+
+
+Excluded projects
+---------------------------------------
+{none}
+
+
