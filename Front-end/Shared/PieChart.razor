@@ -1,0 +1,45 @@
+@using ChartJs.Blazor.PieChart
+@using System.Drawing
+
+<Chart Config="_config" @ref="_chart"></Chart>
+
+@code {
+    [Parameter]
+    public int NegCount { get; set; }
+    [Parameter]
+    public int PosCount { get; set; }
+    private PieConfig _config;
+    private Chart _chart;
+
+    protected override void OnInitialized()
+    {
+        _config = new PieConfig
+        {
+            Options = new PieOptions
+            {
+                Responsive = true,
+                Title = new OptionsTitle
+                {
+                    Display = true,
+                    Text = "Sentiments distribution"
+                }
+            }
+        };
+
+        foreach (string color in new[] { "Positive", "Negative" })
+        {
+            _config.Data.Labels.Add(color);
+        }
+
+        PieDataset<int> dataset = new PieDataset<int>(new[] { PosCount, NegCount }) // to be changed
+        {
+            BackgroundColor = new[]
+            {
+                ColorUtil.ColorHexString(75, 192, 192), // Slice 3 aka "Green"
+                ColorUtil.ColorHexString(255, 99, 132), // Slice 1 aka "Red"
+            }
+        };
+
+        _config.Data.Datasets.Add(dataset);
+    }
+}

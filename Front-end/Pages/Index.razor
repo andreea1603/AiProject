@@ -1,0 +1,29 @@
+@page "/"
+@* @layout MainLayout *@
+
+<Navbar />
+<div class="container main-container cont-main">
+    <p>
+    SentiTweet analyzes the impact of a tweet based on user feedback, either through comments or retweets.
+    </p>
+    <p>
+    To see the impact of a topic, write it down and hit Analyze.
+    </p>
+    <p>
+    To see the impact of a tweet, enter its URL and hit Analyze.
+    </p>
+    <form method="get" action="/eval">
+      <div class="form-row align-items-center">
+        <div class="col-sm-10 my-1">
+          <label class="sr-only" for="user-input">Name</label>
+          <input type="text" class="form-control" id="user-input" name="query" placeholder="enter either topic or tweet URL...">
+        </div>
+        
+        <div class="col-2 my-1">
+          <button type="submit" class="btn btn-dark btn-light-margin">Analyze</button>
+        </div>
+      </div>
+    </form>
+</div>
+
+

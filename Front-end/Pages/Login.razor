@@ -1,0 +1,104 @@
+@page "/login"
+@inject IHttpClientFactory ClientFactory
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject NavigationManager NavManager
+@inject StorageService storageService
+
+@* @layout MainLayout *@
+<Navbar />
+<div class="container main-container cont-main">
+  @foreach (var error in errors)
+  {
+      <div class="alert alert-danger" role="alert">
+        @error
+      </div>
+  }
+<div style="margin: 50px 200px 0px 200px;">
+  <div class="row mb-3">
+    <label for="inputEmail3" class="col-sm-2 col-form-label">Username</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" name="username" id="username" @bind="Username">
+    </div>
+  </div>
+  <div class="row mb-3">
+    <label for="inputPassword3" class="col-sm-2 col-form-label">Password</label>
+    <div class="col-sm-10">
+      <input type="password" class="form-control" name="password" id="password" @bind="Password">
+    </div>
+  </div>
+  <button class="btn btn-dark" style="margin-left: 127px;" @onclick=TryLogin>Sign in</button>
+</div>
+</div>
+
+@code {
+  public string Username { get; set; }
+  public string Password { get; set; }
+  private List<string> errors = new();
+
+  public async void TryLogin()
+  {
+    List<string> perrors = new();
+    bool hadError = false;
+    if (!IsValidUserName())
+    {
+      hadError = true;
+      perrors.Add("Username must be not empty");
+    }
+    if (!IsValidPassword())
+    {
+      hadError = true;
+      perrors.Add("Password must be not empty");
+    }
+    if (hadError)
+    {
+      errors = perrors;
+      StateHasChanged();
+    }
+
+    HttpClient client = ClientFactory.CreateClient();
+    string url = "http://localhost:5050/Users/authenticate";
+    var request = new HttpRequestMessage(HttpMethod.Post, url);
+    request.Content = JsonContent.Create(new {
+      username = Username,
+      password = Password
+    });
+    var response = client.Send(request);
+    if (response.StatusCode != System.Net.HttpStatusCode.OK) {
+      Console.WriteLine("eroare la login");
+      return;
+    }
+    LoginResponse res = await response.Content.ReadFromJsonAsync<LoginResponse>();
+    string token = res.Token;
+    Console.WriteLine($"Logged in. Token is {token}");
+    storageService.Set("token", token);
+    Console.WriteLine($"Token from our storage: {storageService.Get("token")}");
+    @* await localStorage.SetItemAsync("token", token); *@
+    @* string tok_ls = await localStorage.GetItemAsync<string>("token");
+    Console.WriteLine($"Token from localStorage: {tok_ls}");
+     *@
+    NavManager.NavigateTo("http://localhost:5000/");
+  }
+
+  public class LoginResponse {
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+    [JsonPropertyName("username")]
+    public string Username { get; set; }
+    [JsonPropertyName("firstName")]
+    public string FirstName { get; set; }
+    [JsonPropertyName("lastName")]
+    public string LastName { get; set; }
+    [JsonPropertyName("token")]
+    public string Token {get; set; }
+  }
+
+  private bool IsValidUserName()
+    {
+      return Username != null && Username.Length >= 5 && Username.Length <= 14;
+    }
+
+    private bool IsValidPassword()
+    {
+      return Password != null && Password.Length >= 8 && Password.Length <= 18;
+    }
+}

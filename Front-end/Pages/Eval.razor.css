@@ -1,0 +1,30 @@
+.block-comm {
+    width: 50%; 
+    justify-content: space-around;
+}
+
+.btn-comm {
+    width: 50%; 
+    margin: 0 auto;
+}
+
+.comm {
+    justify-content: space-around;
+    color: white;
+    padding: 10px;
+    border: 3px solid black;
+    border-radius: 30px;
+    margin-bottom: 0;
+}
+
+.comm-pos {
+    background-color: rgb(51, 126, 126);
+}
+
+.comm-neg {
+    background-color: rgb(158, 65, 86);
+}
+
+.comm-neu {
+    background-color: rgb(141, 114, 51);
+}

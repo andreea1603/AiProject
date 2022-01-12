@@ -1,0 +1,158 @@
+@page "/eval"
+@* @layout MainLayout *@
+@inject NavigationManager NavigationManager
+@inject IHttpClientFactory ClientFactory
+@using System.Text.RegularExpressions
+<Navbar />
+@if (Loaded)
+{
+    @if (PosCount + NegCount == 0)
+    {
+        <hr />
+        <div style="margin: 10px 30px; font-size: 1.4em;"> There are no results for this query. Please try another one. </div>
+        <hr />
+    } else {
+        <div style="width: 50%; margin: 0 auto;">
+        <PieChart PosCount=@PosCount NegCount=@NegCount/>
+    </div>
+    <hr />
+    <div style="margin: 10px 30px; font-size: 1.4em;"> Press the refresh button if you consider that the prediction is not accurate </div>
+    <hr />
+    <div style="width: 100%; display: flex; margin: 10px 0px;">
+        <div class="block-comm positive">
+            <button type="submit" class="btn-comm btn btn-info btn-light-margin" style="width: 100%;">Positives</button>
+            @if (PosList == null || PosList.Count == 0) {
+                <p class="comm comm-pos">no positive comments to display</p>
+            } else {
+                @for (int i = 0, maxi = Math.Min(PosList.Count, 7); i < maxi; i++) {
+                    var tweet = PosList[i];
+                    <p class="comm comm-pos">
+                        @PosList[i]
+                        <buttton @onclick="() => ReevalTweet(tweet, true)" style="cursor: pointer;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                        </svg>
+                        </buttton>
+                    </p>
+                }
+            }
+        </div>
+        <div class="block-comm  negative">
+            <button type="submit" class="bton-comm btn btn-danger btn-light-margin" style="width: 100%;">Negatives</button>
+            @if (NegList == null || NegList.Count == 0) {
+                <p class="comm comm-neg">no negative comments to display</p>
+            } else {
+                @for (int i = 0, maxi = Math.Min(NegList.Count, 7); i < maxi; i++) {
+                    var tweet = NegList[i];
+                    <p class="comm comm-neg">
+                        @NegList[i]
+                        <buttton @onclick="() => ReevalTweet(tweet, false)" style="cursor: pointer;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                        </svg>
+                        </buttton>
+                    </p>
+                }
+            }
+        </div>
+    </div>
+    }
+}
+else
+{
+    <div style="width: 300px; height: 300px; margin: 0 auto;">
+        <h2 style="margin-left: 100px">loading...</h2>
+        <Loader />
+    </div>
+}
+
+@code {
+    private string query;
+    private List<string> reviews;
+    public bool Loaded { get; set; }
+    public int PosCount { get; set; }
+    public int NegCount { get; set; }
+    public List<string> PosList { get; set; }
+    public List<string> NegList { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Loaded = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            query = new Uri(NavigationManager.Uri).Query.Substring(7);
+            await GetData(query);
+            Loaded = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ReevalTweet(string tweet, bool isPositive)
+    {
+        try {
+            string url = $"http://localhost:5050/reevaluate";
+            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Content = JsonContent.Create(new {
+                reevaluate = new List<string> {tweet}
+            });
+            var client = ClientFactory.CreateClient();
+            var response = await client.SendAsync(request);
+        } catch (Exception ex) {
+            Console.WriteLine(ex.ToString());
+        } finally {
+            if (isPositive)
+            {
+                PosList.Remove(tweet);
+            } else {
+                NegList.Remove(tweet);
+            }
+        }
+    }
+
+    private async Task GetData(string query)
+    {
+        string decodedQuery = System.Net.WebUtility.UrlDecode(query);
+        bool isUrl = Uri.IsWellFormedUriString(decodedQuery, UriKind.Absolute);
+        Console.WriteLine($"isUrl:{isUrl} decodedQuery:{decodedQuery}");
+        string path = "hashtagAnalysis";
+        if (isUrl)
+        {
+            path = "ThreadAnalysis";
+        }
+        var url = $"http://localhost:5050/v1/{path}?modelInput={query}";
+        Console.WriteLine($"Requesting GET at: {url}");
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        var client = ClientFactory.CreateClient();
+        var response = await client.SendAsync(request);
+        if (response.IsSuccessStatusCode)
+        {
+            using var responseStream = await response.Content.ReadAsStreamAsync();
+            IEnumerable<string> data = await JsonSerializer.DeserializeAsync<ICollection<string>>(responseStream);
+            List<string> list = data.ToList<string>();
+            NegCount = Int32.Parse(Regex.Match(list[0], @"\d+").Value);
+            PosCount = Int32.Parse(Regex.Match(list[1], @"\d+").Value);
+            PosList = new List<string>();
+            Console.WriteLine($"{NegCount} from {list[0]}");
+            Console.WriteLine($"{PosCount} from {list[1]}");
+            NegList = new List<string>();
+            for (int i = 2; i < 30; i++) {
+                if (list[i] != null) {
+                    NegList.Add(list[i]);
+                }
+            }
+            for (int i = 30; i < list.Count; i++)
+            {
+                if (list[i] != null) {
+                    PosList.Add(list[i]);
+                }
+            }
+        }
+        StateHasChanged();
+    }
+}

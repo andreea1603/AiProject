@@ -1,0 +1,132 @@
+@page "/register"
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager NavManager
+
+@* @layout MainLayout *@
+<Navbar />
+<div class="container main-container cont-main">
+  @foreach (var error in errors)
+  {
+      <div class="alert alert-danger" role="alert">
+        @error
+      </div>
+  }
+<div style="margin: 50px 200px 0px 200px;">
+  <div class="row mb-3">
+    <label for="firstname" class="col-sm-2 col-form-label">First Name</label>
+    <div class="col-sm-10">
+        <input type="text" class="form-control" id="firstname" name="firstname" @bind="FirstName">
+    </div>
+  </div>
+  <div class="row mb-3">
+    <label for="lastname" class="col-sm-2 col-form-label">Last Name</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" id="lastname" name="lastname" @bind="LastName">
+    </div>
+  </div>
+  <div class="row mb-3">
+    <label for="username" class="col-sm-2 col-form-label">Username</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" id="username" name="username" @bind="Username">
+    </div>
+  </div>
+  <div class="row mb-3">
+    <label for="password" class="col-sm-2 col-form-label">Password</label>
+    <div class="col-sm-10">
+      <input type="password" class="form-control" id="password" name="password" @bind="Password">
+    </div>
+  </div>
+  <div class="row mb-3">
+    <label for="invitecode" class="col-sm-2 col-form-label">Invite Code</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" id="invitecode" name="invitecode" @bind="InviteCode">
+    </div>
+  </div>
+  <button type="submit" class="btn btn-dark" style="margin-left: 127px;" @onclick="TryRegister">Register</button>
+</div>
+</div>
+
+@code {
+    public string FirstName;
+    public string LastName;
+    public string Username;
+    public string Password;
+    public string InviteCode;
+
+    private List<string> errors = new();
+
+    public void TryRegister()
+    {
+        List<string> perrors = new();
+        bool hadError = false;
+        if (!IsValidFirstName())
+        {
+          hadError = true;
+          perrors.Add("First Name must have length between 2 and 18");
+        }
+        if (!IsValidLastName())
+        {
+          hadError = true;
+          perrors.Add("Last Name must have length between 2 and 18");
+        }
+        if (!IsValidUserName())
+        {
+          hadError = true;
+          perrors.Add("Username must have length between 6 and 14");
+        }
+        if (!IsValidPassword())
+        {
+          hadError = true;
+          perrors.Add("Password must have length between 8 and 18");
+        }
+        if (!IsValidInviteCode()) {
+          hadError = true;
+          perrors.Add("You must type the invite code in order to register");
+        }
+        if (hadError)
+        {
+          errors = perrors;
+          StateHasChanged();
+        }
+        HttpClient client = ClientFactory.CreateClient();
+        string url = "http://localhost:5050/Users/register";
+        var request = new HttpRequestMessage(HttpMethod.Post, url);
+        request.Content = JsonContent.Create(new {
+            firstName = FirstName,
+            lastName = LastName,
+            username = Username,
+            password = Password ,
+            inviteCode = InviteCode
+        });
+        var response = client.Send(request);
+        if (response.StatusCode == System.Net.HttpStatusCode.OK) {
+            NavManager.NavigateTo("/");
+        }
+    }
+
+    private bool IsValidFirstName()
+    {
+
+      return FirstName != null && FirstName.Length >= 2 && FirstName.Length <= 18;
+    }
+
+    private bool IsValidLastName()
+    {
+      return LastName != null && LastName.Length >= 2 && LastName.Length <= 18;
+    }
+
+    private bool IsValidUserName()
+    {
+      return Username != null && Username.Length >= 5 && Username.Length <= 14;
+    }
+
+    private bool IsValidPassword()
+    {
+      return Password != null && Password.Length >= 8 && Password.Length <= 18;
+    }
+
+    private bool IsValidInviteCode()
+    {
+      return InviteCode != null && InviteCode.Length >= 4 && InviteCode.Length <= 18;
+    }
+}

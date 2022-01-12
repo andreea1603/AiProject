@@ -1,0 +1,204 @@
+@page "/admin/reevaluate"
+@* @layout MainLayout *@
+@inject NavigationManager NavigationManager
+@inject StorageService storageService
+@inject IHttpClientFactory ClientFactory
+@using MongoDB.Bson
+@using MongoDB.Bson.Serialization
+<Navbar />
+@if (LoggedIn)
+{
+    @if (Loaded)
+    {
+        <div style="margin: 10px 30px; font-size: 2em;"> Press the corresponding buttons to either mark a sentence as positive, negative, or to discard it </div>
+        <hr />
+        <button @onclick="StartRetraining">Start Retraining</button>
+        @if (Training)
+        {
+            <p>Training Started: @dateTime.ToString()</p>
+            <p>Training Ending: @dateTime.Add(TimeSpan.FromSeconds(trainingSec)).ToString())</p>
+        }
+
+        <div style="margin: 20px 30px; min-width: 500px; width: 60%; display: flex; flex-direction: column; margin-left: auto; margin-right: auto;">
+            @if (Entries == null || Entries.Count == 0)
+            {
+                <p class="comm">no entries to display</p>
+            } else {
+                @for (int i = 0; i < Entries.Count; i++)
+                {
+                    var currEntry = Entries[i];
+                    <div class="comm" style="display: flex; justify-content: space-between; margin-bottom: 10px; border-radius: 20px; padding: 5px; font-size: 1.2em;">
+                        <span>@Entries[i].Text</span>
+                        <span style="min-width: 101px">
+                        <img @onclick="() => EvalPositive(currEntry)" src="https://icons.iconarchive.com/icons/hopstarter/scrap/256/Aqua-Ball-Green-icon.png" width="30px" height="30px"/>
+                        <img @onclick="() => EvalNegative(currEntry)" src="https://icons.iconarchive.com/icons/hopstarter/scrap/256/Aqua-Ball-Red-icon.png" width="30px" height="30px"/>
+                        <img @onclick="() => EvalDiscard(currEntry)" src="https://icons-for-free.com/iconfiles/png/512/delete+remove+trash+trash+bin+trash+can+icon-1320073117929397588.png" width="30px" height="30px"/>
+                        </span>
+                    </div>
+                }
+            }
+        </div>
+    }
+    else
+    {
+        <div style="width: 300px; height: 300px; margin: 0 auto;">
+            <h2 style="margin-left: 100px">loading...</h2>
+            <Loader />
+        </div>
+    }
+} else {
+    <div style="width: 600px; height: 300px; margin: 0 auto;">
+            <h2 style="margin-left: 100px">You must be an admin!</h2>
+    </div>
+}
+
+@code {
+    public bool LoggedIn { get; set; }
+    public bool Loaded { get; set; }
+    public List<Entry> Entries { get; set; }
+    
+    public bool Training;
+    public DateTime dateTime;
+    private static readonly int trainingSec = 200;
+    public async Task StartRetraining()
+    {
+        var url = $"http://localhost:5050/Admin/retrain/{trainingSec}";
+        var request = new HttpRequestMessage(HttpMethod.Post, url);
+        var client = ClientFactory.CreateClient();
+        client.SendAsync(request);
+        Training = true;
+        dateTime = DateTime.Now;
+        StateHasChanged();
+        await Task.Delay(trainingSec * 1000);
+        Training = false;
+        StateHasChanged();
+    }
+    public async Task EvalPositive(Entry entry)
+    {
+        try {
+            var url = $"http://localhost:5050/Admin/retrain";
+            var request = new HttpRequestMessage(HttpMethod.Patch, url);
+            request.Content = JsonContent.Create(new {
+                id = entry.Id,
+                text = entry.Text,
+                tag = "4"
+            });
+            var client = ClientFactory.CreateClient();
+            var response = await client.SendAsync(request);
+        } catch (Exception ex) {
+            Console.WriteLine(ex.ToString());
+        } finally {
+            Entries.Remove(entry);
+            StateHasChanged();
+        }
+
+        
+    }
+    public async Task EvalNegative(Entry entry)
+    {
+        try {
+            var url = $"http://localhost:5050/Admin/retrain";
+            var request = new HttpRequestMessage(HttpMethod.Patch, url);
+            request.Content = JsonContent.Create(new {
+                id = entry.Id,
+                text = entry.Text,
+                tag = "0"
+            });
+            var client = ClientFactory.CreateClient();
+            var response = await client.SendAsync(request);
+        } catch (Exception ex) {
+            Console.WriteLine(ex.ToString());
+        } finally {
+            Entries.Remove(entry);
+            StateHasChanged();
+        }
+    }
+    public async Task EvalDiscard(Entry entry)
+    {
+        try {
+            var url = $"http://localhost:5050/Admin/retrain/{entry.Id}";
+            var request = new HttpRequestMessage(HttpMethod.Delete, url);
+            var client = ClientFactory.CreateClient();
+            var response = await client.SendAsync(request);
+        } catch (Exception ex) {
+            Console.WriteLine(ex.ToString());
+        } finally {
+            Entries.Remove(entry);
+            StateHasChanged();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        LoggedIn = false;
+        if (storageService.Has("token"))
+        {
+            string token = storageService.Get("token");
+            Console.WriteLine($"token from navbar: {token}");
+            LoggedIn = true;
+            StateHasChanged();
+        }
+        Loaded = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (LoggedIn && firstRender)
+        {
+            await GetData();
+            Loaded = true;
+            StateHasChanged();
+        }
+    }
+
+    private void SimulateGetData()
+    {
+        Entries = new List<Entry> {
+            new Entry {
+                Id = "100",
+                Text = "hello this is not a positive text"
+            },
+            new Entry {
+                Id = "200",
+                Text = "hello this is not a negative text"
+            },
+            new Entry {
+                Id = "300",
+                Text = "hello this is not a text"
+            },
+            new Entry {
+                Id = "300",
+                Text = "hello this is not a text, hello this is not a text, hello this is not a text, hello this is not a text, hello this is not a text, hello this is not a text, hello this is not a text"
+            }
+        };
+        StateHasChanged();
+    }
+    private async Task GetData()
+    {
+        try {
+            var url = $"http://localhost:5050/Admin/retrain";
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            var client = ClientFactory.CreateClient();
+            var response = await client.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                using var responseStream = await response.Content.ReadAsStreamAsync();
+                string res = new StreamReader(responseStream, Encoding.UTF8).ReadToEnd();
+                res = res.Replace("\\", "");
+                res = res.Substring(1, res.Length - 2);
+                Console.WriteLine($"received json: {res}");
+                var bsonDocument = BsonDocument.Parse(res);
+                var reeval = BsonSerializer.Deserialize<ReevalResponse>(bsonDocument);
+                Console.WriteLine(reeval);
+                foreach (var entry in reeval.Entries) {
+                    Console.WriteLine($"{entry.Id} {entry.Text}");
+                }
+                Entries = reeval.Entries;
+                StateHasChanged();
+            }
+        } catch (Exception ex) {
+            Console.WriteLine(ex.ToString());
+            Entries = new List<Entry> {};
+        }
+    }
+}
